@@ -460,7 +460,8 @@ Default: 5432
 
 If +user=+ is set, all connections to the destination database will be
 done with the specified user, meaning that there will be only one pool 
-for this database.
+for this database. If +force_user=+ is also set (to any value besides 0),
+the client credentials must match these credentials.
 
 Otherwise PgBouncer tries to log into the destination database with client
 username, meaning that there will be one pool per user.

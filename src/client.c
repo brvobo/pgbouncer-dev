@@ -89,8 +89,16 @@ bool set_pool(PgSocket *client, const char *dbname, const char *username)
 	}
 
 	/* pool user may be forced */
-	if (db->forced_user)
-		user = db->forced_user;
+	if (db->forced_user) {
+		if (db->force_user) {
+			if (strcmp(username, db->forced_user->name) != 0) {
+				disconnect_client(client, true, "User %s not allowed to connect", username);
+				return false;
+			}
+		} else {
+			user = db->forced_user;
+		}
+	}
 	client->pool = get_pool(db, user);
 	if (!client->pool) {
 		disconnect_client(client, true, "no memory for pool");

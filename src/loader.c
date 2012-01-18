@@ -179,6 +179,7 @@ bool parse_database(void *base, const char *name, const char *connstr)
 	int res_pool_size = -1;
 	int dbname_ofs;
 	int pool_mode = POOL_INHERIT;
+	bool force_user_flag = false;
 
 	char *tmp_connstr;
 	const char *dbname = name;
@@ -223,6 +224,8 @@ bool parse_database(void *base, const char *name, const char *connstr)
 			port = val;
 		else if (strcmp("user", key) == 0)
 			username = val;
+		else if (strcmp("force_user", key) == 0)
+			force_user_flag = !!atoi(val);
 		else if (strcmp("password", key) == 0)
 			password = val;
 		else if (strcmp("client_encoding", key) == 0)
@@ -306,6 +309,7 @@ bool parse_database(void *base, const char *name, const char *connstr)
 		if (changed)
 			tag_database_dirty(db);
 	}
+	db->force_user = force_user_flag;
 
 	/* if pool_size < 0 it will be set later */
 	db->pool_size = pool_size;

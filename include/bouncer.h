@@ -255,6 +255,7 @@ struct PgDatabase {
 	bool db_dead;		/* used on RELOAD/SIGHUP to later detect removed dbs */
 	bool db_auto;		/* is the database auto-created by autodb_connstr */
 	bool admin;		/* internal console db */
+	bool force_user;	/* if the client must have credentials matching the forced_user */
 
 	struct PktBuf *startup_params; /* partial StartupMessage (without user) be sent to server */
 
