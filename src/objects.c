@@ -133,8 +133,13 @@ void change_client_state(PgSocket *client, SocketState newstate)
 		statlist_remove(&justfree_client_list, &client->head);
 		break;
 	case CL_LOGIN:
+		if (newstate == CL_WAITING)
+			newstate = CL_WAITING_LOGIN;
 		statlist_remove(&login_client_list, &client->head);
 		break;
+	case CL_WAITING_LOGIN:
+		if (newstate == CL_ACTIVE)
+			newstate = CL_LOGIN;
 	case CL_WAITING:
 		statlist_remove(&pool->waiting_client_list, &client->head);
 		break;
@@ -163,6 +168,7 @@ void change_client_state(PgSocket *client, SocketState newstate)
 		statlist_append(&login_client_list, &client->head);
 		break;
 	case CL_WAITING:
+	case CL_WAITING_LOGIN:
 		statlist_append(&pool->waiting_client_list, &client->head);
 		break;
 	case CL_ACTIVE:
@@ -466,7 +472,7 @@ PgPool *get_pool(PgDatabase *db, PgUser *user)
 /* deactivate socket and put into wait queue */
 static void pause_client(PgSocket *client)
 {
-	Assert(client->state == CL_ACTIVE);
+	Assert(client->state == CL_ACTIVE || client->state == CL_LOGIN);
 
 	slog_debug(client, "pause_client");
 	change_client_state(client, CL_WAITING);
@@ -477,7 +483,7 @@ static void pause_client(PgSocket *client)
 /* wake client from wait */
 void activate_client(PgSocket *client)
 {
-	Assert(client->state == CL_WAITING);
+	Assert(client->state == CL_WAITING || client->state == CL_WAITING_LOGIN);
 
 	slog_debug(client, "activate_client");
 	change_client_state(client, CL_ACTIVE);
@@ -525,7 +531,7 @@ bool find_server(PgSocket *client)
 	bool res;
 	bool varchange = false;
 
-	Assert(client->state == CL_ACTIVE);
+	Assert(client->state == CL_ACTIVE || client->state == CL_LOGIN);
 
 	if (client->link)
 		return true;
@@ -793,6 +799,7 @@ void disconnect_client(PgSocket *client, bool notify, const char *reason, ...)
 		}
 	case CL_LOGIN:
 	case CL_WAITING:
+	case CL_WAITING_LOGIN:
 	case CL_CANCEL:
 		break;
 	default:
@@ -1135,7 +1142,7 @@ bool use_client_socket(int fd, PgAddr *addr,
 		return false;
 	client->suspended = 1;
 
-	if (!set_pool(client, dbname, username))
+	if (!set_pool(client, dbname, username, true))
 		return false;
 
 	change_client_state(client, CL_ACTIVE);

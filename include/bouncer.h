@@ -49,6 +49,7 @@ enum SocketState {
 	CL_JUSTFREE,		/* justfree_client_list */
 	CL_LOGIN,		/* login_client_list */
 	CL_WAITING,		/* pool->waiting_client_list */
+	CL_WAITING_LOGIN,	/*   - but return to CL_LOGIN instead of CL_ACTIVE */
 	CL_ACTIVE,		/* pool->active_client_list */
 	CL_CANCEL,		/* pool->cancel_req_list */
 
@@ -298,6 +299,8 @@ struct PgSocket {
 	bool exec_on_connect:1;	/* server: executing connect_query */
 
 	bool wait_for_welcome:1;/* client: no server yet in pool, cannot send welcome msg */
+	bool wait_for_user_conn:1;/* client: waiting for auth_conn server connection */
+	bool wait_for_user:1;	/* client: waiting for auth_conn query results */
 
 	bool suspended:1;	/* client/server: if the socket is suspended */
 
@@ -313,7 +316,10 @@ struct PgSocket {
 	PgAddr remote_addr;	/* ip:port for remote endpoint */
 	PgAddr local_addr;	/* ip:port for local endpoint */
 
-	struct DNSToken *dns_token;	/* ongoing request */
+	union {
+		struct DNSToken *dns_token;	/* ongoing request */
+		PgDatabase *db;			/* cache db while doing auth query */
+	};
 
 	VarCache vars;		/* state of interesting server parameters */
 
@@ -369,6 +375,7 @@ extern usec_t cf_dns_max_ttl;
 
 extern int cf_auth_type;
 extern char *cf_auth_file;
+extern char *cf_auth_conn;
 
 extern char *cf_pidfile;
 

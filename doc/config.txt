@@ -78,6 +78,22 @@ pointed directly to one of those backend files.
 
 Default: not set.
 
+==== auth_conn ====
+
+The name of a database listed in the databases section to load user names
+and passwords from, instead of auth_file.  The database listed must have
+a specific user set for it that has access to read the pg_shadow table.
+It is highly recommended that you also set the force_user=1,
+pool_mode=statement, and a small pool_size for that database in order to
+preserve security and availability of logins, since for troubleshooting
+purposes the auth_conn database is a regular pgbouncer database.  Note
+that access to the pgbouncer virtual database is always granted to
+the pgbouncer user over a unix socket running as the same user as
+pgbouncer, even if the auth_conn database is unavailable or does not
+contain a pgbouncer user.
+
+Default: not set.
+
 ==== auth_type ====
 
 How to authenticate users.
@@ -526,13 +542,15 @@ authentication files in the Postgres data directory.
 
   [databases]
   template1 = host=127.0.0.1 dbname=template1
+  pg_shadow = host=127.0.0.1 dbname=template1 user=baz password=foo force_user=1 pool_mode=statement pool_size=2
 
   [pgbouncer]
   pool_mode = session
   listen_port = 6543
   listen_addr = 127.0.0.1
   auth_type = md5
-  auth_file = users.txt
+  ; auth_file = users.txt
+  auth_conn = pg_shadow
   logfile = pgbouncer.log
   pidfile = pgbouncer.pid
   admin_users = someuser

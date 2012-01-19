@@ -84,6 +84,7 @@ int cf_tcp_keepintvl;
 
 int cf_auth_type = AUTH_MD5;
 char *cf_auth_file;
+char *cf_auth_conn;
 
 int cf_max_client_conn;
 int cf_default_pool_size;
@@ -167,6 +168,7 @@ CF_ABS("unix_socket_dir", CF_STR, cf_unix_socket_dir, CF_NO_RELOAD, "/tmp"),
 #endif
 CF_ABS("auth_type", CF_LOOKUP(auth_type_map), cf_auth_type, 0, "md5"),
 CF_ABS("auth_file", CF_STR, cf_auth_file, 0, "unconfigured_file"),
+CF_ABS("auth_conn", CF_STR, cf_auth_conn, 0, ""),
 CF_ABS("pool_mode", CF_LOOKUP(pool_mode_map), cf_pool_mode, 0, "session"),
 CF_ABS("max_client_conn", CF_INT, cf_max_client_conn, 0, "100"),
 CF_ABS("default_pool_size", CF_INT, cf_default_pool_size, 0, "20"),
